@@ -6,7 +6,7 @@ const account1 = {
   };
   
   const account2 = {
-    owner: 'Jaya Sudhan ',
+    owner: 'Luffy',
     movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
     interestRate: 1.5,
     pin: 2222,
@@ -33,7 +33,7 @@ const account1 = {
     pin:5555,
   };
   
-  const accounts = [account1, account2, account3, account4];
+  const accounts = [account1, account2, account3, account4,account5];
   
   /////////////////////////////////////////////////
   // Elements
@@ -64,33 +64,36 @@ const account1 = {
   
   /////////////////////////////////////////////////
   // Functions
+  //---------------Display  Movemts --------------------
+  const displayMovements = function (movements,sort=false ) {
+
+    containerMovements.innerHTML = '';
+    const movs= sort ?movements.slice().sort((a,b)=>a-b):movements;
+
   
-//   const displayMovements = function (movements, sort = false) {
-//     containerMovements.innerHTML = '';
+   
   
-    // const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+    movs.forEach(function (mov, i) {
+      const type = mov > 0 ? 'deposit' : 'withdrawal';
   
-//     movs.forEach(function (mov, i) {
-//       const type = mov > 0 ? 'deposit' : 'withdrawal';
+      const html = `
+        <div class="movements__row">
+          <div class="movements__type movements__type--${type}">${
+        i + 1
+      } ${type}</div>
+          <div class="movements__value">${mov}€</div>
+        </div>
+      `;
   
-//       const html = `
-//         <div class="movements__row">
-//           <div class="movements__type movements__type--${type}">${
-//         i + 1
-//       } ${type}</div>
-//           <div class="movements__value">${mov}€</div>
-//         </div>
-//       `;
-  
-//       containerMovements.insertAdjacentHTML('afterbegin', html);
-//     });
-//   };
+      containerMovements.insertAdjacentHTML('afterbegin', html);
+    });
+  };
   
   const calcDisplayBalance = function (acc) {
     acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
     labelBalance.textContent = `${acc.balance}€`;
   };
-  
+  //-----------Display Summary ---------------
   const calcDisplaySummary = function (acc) {
     const incomes = acc.movements
       .filter(mov => mov > 0)
@@ -164,7 +167,7 @@ const account1 = {
       updateUI(currentAccount);
     }
   });
-  
+  //--------------Button Transfer ----------------------
   btnTransfer.addEventListener('click', function (e) {
     e.preventDefault();
     const amount = Number(inputTransferAmount.value);
@@ -187,8 +190,24 @@ const account1 = {
       updateUI(currentAccount);
     }
   });
+  //----------Transfer End---------------------------------
+
+  //--------------Loan Button Function------------------
+  btnLoan.addEventListener('click',function(e){
+     e.preventDefault();
+     const amount=Number(inputLoanAmount.value);
+     //Loan should be processed when deposit >= 10 percent of amount
+     if(amount>0 && currentAccount.movements.some(mov=>mov>=amount/10)){
+      currentAccount.movements.push(amount);
+
+   updateUI(currentAccount);
+
+     }//end of if
+     inputLoanAmount.value='';
+  });
+
   
-  //Close account function 
+  //--------------Close account function ----------------
   
   btnClose.addEventListener('click', function (e) {
     e.preventDefault();
@@ -212,3 +231,23 @@ const account1 = {
   
     inputCloseUsername.value = inputClosePin.value = '';
   });
+  //Code For Sorting the Transactions Function
+  let sorted=true;
+  btnSort.addEventListener('click', function (e)
+  {
+    e.preventDefault();
+    displayMovements(currentAccount.movements,!sorted);
+    sorted=!sorted;
+
+  })
+  ////..Lecture 164
+  //Array.form has two psrameters 
+
+  document.querySelector('.balance__value').addEventListener('click',function(e){
+    const moveui=Array.from(document.querySelectorAll('.movements__value'))
+    console.log(moveui.map(el=>el.textContent.replace('€','')));
+   });
+
+   
+
+
