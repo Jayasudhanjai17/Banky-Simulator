@@ -140,27 +140,41 @@ const formatMovementDate = function (date, local) {
     // return `${dayy}/${monn}/${date.getFullYear()}`;
     return Intl.DateTimeFormat(local).format(date);
   }
-};//--------------------------------------------------------
+}; //--------------------------------------------------------
 //-----------------------------Formatting Currency-------------------
-const formattCur = function(value,local,curen){
-return new Intl.NumberFormat(local, {
+const formattCur = function (value, local, curen) {
+  return new Intl.NumberFormat(local, {
     style: "currency",
     currency: curen,
   }).format(value);
-}
+};
 //---------------Display  Movemts --------------------
 const displayMovements = function (acc, sort = false) {
   containerMovements.innerHTML = "";
-  const movs = sort
-    ? acc.movements.slice().sort((a, b) => a - b)
-    : acc.movements;
+
+  // const movs = sort
+  // ? acc.movements.slice().sort((a, b) => a - b)
+  // : acc.movements;
+  let movs = [];
+  if (sort) {
+    for (const [i, mov] of acc.movements.entries()) {
+      movs.push({ mov, date: acc.movementsDates[i] });
+      movs.sort((a, b) => a.mov - b.mov);
+    }
+  } else {
+    for (const [i, mov] of acc.movements.entries()) {
+      movs.push({ mov, date: acc.movementsDates[i] });
+    }
+  }
+
+  console.log(acc.movements);
 
   movs.forEach(function (mov, i) {
-    const type = mov > 0 ? "deposit" : "withdrawal";
+    const type = mov.mov > 0 ? "deposit" : "withdrawal";
     const date = new Date(acc.movementsDates[i]);
 
     const dispDate = formatMovementDate(date, acc.local);
- const cr=formattCur(mov,acc.local,acc.currency);
+    const cr = formattCur(mov.mov, acc.local, acc.currency);
     const html = `
         <div class="movements__row">
           <div class="movements__type movements__type--${type}">${
@@ -177,7 +191,7 @@ const displayMovements = function (acc, sort = false) {
 //-------------------------------------Display Balance -----------------------------------
 const calcDisplayBalance = function (acc) {
   acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = formattCur(acc.balance,acc.local,acc.currency);
+  labelBalance.textContent = formattCur(acc.balance, acc.local, acc.currency);
 };
 //-----------Display Summary ---------------
 const calcDisplaySummary = function (acc) {
@@ -226,16 +240,46 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
+//NOTE-LEC -181
+
+//================================================================================================================================
+const setLogout = function () {
+  let time = 300;
+  //Set time to 5 minutes
+  // Call the timer every second
+  //Each call show the remaining in the user interface
+  // When 0 seconds, stop timer and log out user
+  const tick = function () {
+    let min = String(Math.trunc(time / 60)).padStart(2, 0);
+    let sec = String(time % 60).padStart(2, 0);
+    labelTimer.textContent = `${min}:${sec}`;
+
+    if (time === 0) {
+      clearInterval(timer);
+      containerApp.style.opacity = 0;
+      labelWelcome.textContent = "Login to get Started";
+    }
+    // if (time > 0) {
+    time--;
+    // }
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+//--------------------------------------------------------------------------------------------------------------------------------------------------
 ///////////////////////////////////////
 // Event handlers
-let currentAccount;
+let currentAccount, timer;
+
 //------------------------Fake Always Logged in---------------------------------
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
+// currentAccount = account1;
+// updateUI(currentAccount);
+// containerApp.style.opacity =100;
 //========================================================
 
 //=================================================================
+//NOTE------------------Login  Button---------------------------------
 btnLogin.addEventListener("click", function (e) {
   // Prevent form from submitting
   e.preventDefault();
@@ -285,7 +329,9 @@ btnLogin.addEventListener("click", function (e) {
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = "";
     inputLoginPin.blur();
-
+    //Calling the time out function
+    if (timer) clearInterval(timer);
+    timer = setLogout();
     // Update UI
     updateUI(currentAccount);
   }
@@ -307,16 +353,20 @@ btnTransfer.addEventListener("click", function (e) {
     receiverAcc?.username !== currentAccount.username
   ) {
     //-------------------------------Doing the transfer---------------------------
-    setTimeout(function(){currentAccount.movements.push(-amount);
-    receiverAcc.movements.push(amount);
+    setTimeout(function () {
+      currentAccount.movements.push(-amount);
+      receiverAcc.movements.push(amount);
 
-    //-----------------------------Add Loan Transfer Date-------------------------------
-    currentAccount.movementsDates.push(new Date().toISOString());
-    receiverAcc.movementsDates.push(new Date().toISOString());
-    //----------Update UI-------------------
-    updateUI(currentAccount);},2500);
+      //-----------------------------Add Loan Transfer Date-------------------------------
+      currentAccount.movementsDates.push(new Date().toISOString());
+      receiverAcc.movementsDates.push(new Date().toISOString());
+      //----------Update UI-------------------
+      updateUI(currentAccount);
+      clearInterval(timer);
+      timer = setLogout();
+    }, 2500);
   }
-  inputLoanAmount.value='';
+  inputLoanAmount.value = "";
 });
 //----------Transfer End---------------------------------
 
@@ -329,10 +379,14 @@ btnLoan.addEventListener("click", function (e) {
     amount > 0 &&
     currentAccount.movements.some((mov) => mov >= amount / 10)
   ) {
-    currentAccount.movements.push(amount);
-    //Add the Loan Date
-    currentAccount.movementsDates.push(new Date().toISOString());
-    updateUI(currentAccount);
+    setTimeout(function () {
+      currentAccount.movements.push(amount);
+      //Add the Loan Date
+      currentAccount.movementsDates.push(new Date().toISOString());
+      updateUI(currentAccount);
+      clearInterval(timer);
+      timer = setLogout();
+    }, 2500);
   } //end of if
   inputLoanAmount.value = "";
 });
@@ -363,11 +417,11 @@ btnClose.addEventListener("click", function (e) {
 
   inputCloseUsername.value = inputClosePin.value = "";
 });
-//------------------Code For Sorting the Transactions Function---------------------
+//------------------ NOTE TODO:Code For Sorting the Transactions Function---------------------
 let sorted = true;
 btnSort.addEventListener("click", function (e) {
   e.preventDefault();
-  displayMovements(currentAccount.movements, !sorted);
+  displayMovements(currentAccount, !sorted);
   sorted = !sorted;
 });
 ////..Lecture 164
@@ -391,37 +445,16 @@ document
 // git push
 
 //-------------------------Lecture Number 179---------------
-//LEC
-const num = 3478033.23;
-console.log(new Intl.NumberFormat("en-US").format(num));
-const vijaybday = function (name) {
-  const d = new Date();
-  const dat = d.getDate() - 1;
 
-  console.log(`Happy Birthday To my Dearest SoulMate ❤️${name} on ${dat}`);
-};
-vijaybday("Vijaychidambaram", "2023-08-20");
 //LEC 180 //SET TIME OUT
-const stk =['MongoDB','React',,'Express','Node','MicroSoft'];
+const stk = ["MongoDB", "React", "Express", "Node", "MicroSoft"];
 
-const  fullstack =setTimeout((...stack)=>console.log(`Here is Your Full Stack Role ${stack}with💥`),5000,...stk);
+const fullstack = setTimeout(
+  (...stack) => console.log(`Here is Your Full Stack Role ${stack}with💥`),
+  5000,
+  ...stk
+);
 
-if(stk.includes('MicroSoft'))clearTimeout(fullstack);
-//NOTE - METHOD setInterval
-const  now =new Date();
-
-const  time=setInterval(()=>{
-  const  now =new Date();
-  const hr= now.getHours();
-  const ts=hr>12?'pm':'am';
-  let ac=hr%12;
-  ac=ac?ac:12;
-  const min=now.getMinutes();
-  const sec=now.getSeconds();
-  console.log(`Clock ${ac}hr:${min}min:${sec}:${ts}`);
-  if(now.getMinutes()===52){clearTimeout(time)
-    console.log('Happy Birthday Gugan');};
-},5000);
+if (stk.includes("MicroSoft")) clearTimeout(fullstack);
 
 //LECTURE  181
-

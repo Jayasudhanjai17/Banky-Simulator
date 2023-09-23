@@ -614,3 +614,18 @@ const dogsCopy = reqfoodary.sort((a, b) => {
   }
 });
 console.log(dogsCopy);
+//NOTE - METHOD setInterval
+const  now =new Date();
+
+// const  time=setInterval(()=>{
+//   const  now =new Date();
+//   const hr= now.getHours();
+//   const ts=hr>12?'pm':'am';
+//   let ac=hr%12;
+//   ac=ac?ac:12;
+//   const min=now.getMinutes();
+//   const sec=now.getSeconds();
+//   console.log(`Clock ${ac}hr:${min}min:${sec}:${ts}`);
+//   if(now.getMinutes()===52){clearTimeout(time)
+//     console.log('Happy Birthday Gugan');};
+// },5000);
